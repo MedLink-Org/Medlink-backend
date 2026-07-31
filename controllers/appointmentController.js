@@ -31,6 +31,25 @@ const getAppointmentsByPatientId = async (req, res) => {
   }
 };
 
+const getAppointmentsByDoctorId = async (req, res) => {
+  try {
+    const result = await appointmentModel.getAppointmentsByDoctorId(req.params.doctorId);
+    res.status(200).json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const getAppointmentsByNurseId = async (req, res) => {
+  try {
+    const result = await appointmentModel.getAppointmentsByDoctorId(req.params.nurseId);
+    res.status(200).json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
 const createAppointment = async (req, res) => {
   try {
     const result = await appointmentModel.createAppointment(req.body);
@@ -65,9 +84,11 @@ const deleteAppointment = async (req, res) => {
 };
 
 module.exports = {
-  getAllAppointments,
+  getAllAppointment,
   getAppointmentById,
   getAppointmentsByPatientId,
+  getAppointmentsByDoctorId,
+  getAppointmentsByNurseId,
   createAppointment,
   updateAppointment,
   deleteAppointment,

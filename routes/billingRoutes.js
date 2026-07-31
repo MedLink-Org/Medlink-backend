@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const billingController = require('../controllers/billingController.js');
+const validateBilling = require('../middleware/validateBilling.js')
 
 router.get('/', billingController.getAllBilling);
 router.get('/:id', billingController.getBillingById);

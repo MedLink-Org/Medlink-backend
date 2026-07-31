@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
-const doctorController = require('../controllers/doctorController')
+const doctorController = require('../controllers/doctorController');
+const validateDoctor = require('../middleware/validateDoctor')
 
 router.get('/', doctorController.getAllDoctors)
 router.get('/:id', doctorController.getDoctorById)

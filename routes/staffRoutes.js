@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const staffController = require('../controllers/staffController.js');
+const validateStaff = require('../middleware/validateStaff.js')
 
 router.get('/', staffController.getAllStaff);
 router.get('/:id', staffController.getStaffById);

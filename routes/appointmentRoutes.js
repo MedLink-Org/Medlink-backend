@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const appointmentController = require('../controllers/appointmentController.js');
+const validateAppointment = require('../middleware/validateAppointment.js')
 
-router.get('/', appointmentController.getAllAppointments);
+router.get('/', appointmentController.getAllAppointment);
 router.get('/:id', appointmentController.getAppointmentById);
 router.get('/patient/:patientId', appointmentController.getAppointmentsByPatientId);
 router.get('/doctor/:doctorId', appointmentController.getAppointmentsByDoctorId);

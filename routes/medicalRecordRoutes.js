@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const medicalRecordController = require('../controllers/medicalRecordController.js');
+const validateMedicalRecord = require('../middleware/validateMedicalRecords.js')
 
 router.get('/', medicalRecordController.getAllMedicalRecords);
 router.get('/:id', medicalRecordController.getMedicalRecordById);

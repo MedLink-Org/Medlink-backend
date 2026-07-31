@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const patientController = require('../controllers/patientController.js')
+const validatePatient = require('../middleware/validatePatient.js');
 
 router.get('/', patientController.getAllPatients)
 router.get('/:id', patientController.getPatientById)

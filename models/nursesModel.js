@@ -1,0 +1,30 @@
+const pool = require('../config/db');
+
+const getAllNurses = () => pool.query('SELECT * FROM nurses');
+
+const getNurseById = (id) =>
+  pool.query('SELECT * FROM nurses WHERE nurse_id = $1', [id]);
+
+const createNurse = (data) => pool.query(
+  `INSERT INTO nurses (first_name, last_name, date_of_birth, contact_info, address, date_of_employment)
+   VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+  [data.first_name, data.last_name, data.date_of_birth, data.contact_info, data.address, data.date_of_employment]
+);
+
+const updateNurse = (id, data) => pool.query(
+  `UPDATE nurses
+   SET first_name = $1, last_name = $2, date_of_birth = $3, contact_info = $4, address = $5, date_of_employment = $6
+   WHERE nurse_id = $7 RETURNING *`,
+  [data.first_name, data.last_name, data.date_of_birth, data.contact_info, data.address, data.date_of_employment, id]
+);
+
+const deleteNurse = (id) =>
+  pool.query('DELETE FROM nurses WHERE nurse_id = $1 RETURNING *', [id]);
+
+module.exports = {
+  getAllNurses,
+  getNurseById,
+  createNurse,
+  updateNurse,
+  deleteNurse,
+};

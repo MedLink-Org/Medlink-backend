@@ -1,32 +1,43 @@
-# Email and Password Authentication
+# Role-Based Email and Password Authentication
 
-The backend registers and authenticates users with only an email address and
-password. Passwords are hashed before storage, and successful registration or
-login returns a Medlink access token.
+The backend authenticates clinic-assigned accounts with email and password.
+Passwords are hashed before storage. Successful login returns a role-aware
+MedLink JWT used on every protected API request.
 
-## Backend setup
+## Backend Setup
 
-1. Copy the values from `.env.example` into `.env`.
+1. Copy `.env.example` to `.env`.
 2. Set `JWT_SECRET` to a long random secret.
-3. For a new database, apply `config/migrations/001_add_users.sql`.
-4. If the previous Google users migration was already applied, apply
-   `config/migrations/002_replace_google_auth_with_password.sql` instead.
+3. Apply these migrations in order:
+
+   ```text
+   config/migrations/001_add_users.sql
+   config/migrations/002_replace_google_auth_with_password.sql
+   config/migrations/003_add_role_based_access.sql
+   ```
+
+4. Review existing accounts migrated to the `staff` role.
 5. Restart the backend.
 
-Existing Google-only rows are preserved by the replacement migration. Those
-users can establish a password by registering with the same email address.
+## Assign Account
 
-## Register
+Only an authenticated `staff` account can assign an account:
 
 ```http
 POST /api/auth/register
 Content-Type: application/json
+Authorization: Bearer <staff-token>
 
 {
-  "email": "user@example.com",
-  "password": "secure-password"
+  "email": "doctor@example.com",
+  "password": "secure-password",
+  "role": "doctor",
+  "profile_id": "D01"
 }
 ```
+
+Valid roles are `staff`, `doctor`, `nurse`, and `patient`. Doctor, nurse, and
+patient accounts require a linked clinic `profile_id`.
 
 ## Login
 
@@ -35,12 +46,12 @@ POST /api/auth/login
 Content-Type: application/json
 
 {
-  "email": "user@example.com",
+  "email": "doctor@example.com",
   "password": "secure-password"
 }
 ```
 
-Both endpoints return:
+The response includes:
 
 ```json
 {
@@ -49,17 +60,18 @@ Both endpoints return:
   "expires_in": "7d",
   "user": {
     "user_id": "1",
-    "email": "user@example.com"
+    "email": "doctor@example.com",
+    "role": "doctor",
+    "profile_id": "D01"
   }
 }
 ```
 
-Send the token on every protected API request:
+Send the token on every protected request:
 
 ```http
 Authorization: Bearer <medlink-jwt>
 ```
 
-All patient, appointment, doctor, nurse, staff, medical-record, and billing
-routes require this header. `GET /api/auth/me` returns the signed-in user's
-current profile.
+`GET /api/auth/me` returns the signed-in account. Backend route authorization
+and resource ownership checks enforce the role and linked profile.

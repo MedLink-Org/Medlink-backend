@@ -3,12 +3,12 @@ const pool = require('../config/db');
 const getAllAppointment = () => pool.query('SELECT * FROM appointments');
 const getAppointmentById = (id) =>
   pool.query('SELECT * FROM appointments WHERE appointment_id = $1', [id]);
-const getAppointmentsByPatientId = (patientId) =>
-  pool.query('SELECT * FROM appointments WHERE patient_id = $1', [patientId]);
-const getAppointmentsByDoctorId = (doctorId) =>
-  pool.query('SELECT * FROM appointments WHERE doctor_id = $1', [doctorId]);
-const getAppointmentsByNurseId = (nurseId) =>
-  pool.query('SELECT * FROM appointments WHERE nurse_id = $1', [nurseId]);
+const getAppointmentsByPatientId = (patient_id) =>
+  pool.query('SELECT * FROM appointments WHERE patient_id = $1', [patient_id]);
+const getAppointmentsByDoctorId = (doctor_id) =>
+  pool.query('SELECT * FROM appointments WHERE doctor_id = $1', [doctor_id]);
+const getAppointmentsByNurseId = (nurse_id) =>
+  pool.query('SELECT * FROM appointments WHERE nurse_id = $1', [nurse_id]);
 
 const createAppointment = (data) =>
   pool.query(
@@ -56,9 +56,9 @@ const deleteAppointment = (id) =>
 
 module.exports = {
   getAllAppointment,
-  getAppointmentByDoctorId,
   getAppointmentById,
-  getAppointmentByNurseId,
+  getAppointmentByDoctorId: getAppointmentsByDoctorId,
+  getAppointmentByNurseId: getAppointmentsByNurseId,
   getAppointmentByPatientId: getAppointmentsByPatientId,
   getAppointmentsByDoctorId,
   getAppointmentsByNurseId,
@@ -67,4 +67,3 @@ module.exports = {
   updateAppointment,
   deleteAppointment,
 };
-

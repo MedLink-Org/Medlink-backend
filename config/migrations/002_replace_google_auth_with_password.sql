@@ -1,0 +1,11 @@
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS password_hash TEXT;
+
+ALTER TABLE users
+DROP COLUMN IF EXISTS google_sub;
+
+ALTER TABLE users
+DROP COLUMN IF EXISTS full_name;
+
+ALTER TABLE users
+DROP COLUMN IF EXISTS avatar_url;

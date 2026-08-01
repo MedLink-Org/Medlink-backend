@@ -1,3 +1,15 @@
+-- =========================
+-- AUTHENTICATED USERS
+-- =========================
+CREATE TABLE users (
+    user_id BIGSERIAL PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_login_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE SEQUENCE patient_id_seq START 1;
 CREATE TABLE patients (
     patient_id TEXT PRIMARY KEY DEFAULT ('P' || LPAD(nextval('patient_id_seq')::TEXT, 3, '0')),

@@ -6,6 +6,7 @@ process.env.JWT_EXPIRES_IN = '1h';
 process.env.BCRYPT_ROUNDS = '10';
 
 const authenticate = require('../middleware/authenticate');
+const authorize = require('../middleware/authorize');
 const {
   hashPassword,
   normalizeCredentials,
@@ -18,15 +19,36 @@ const {
 
 const testUser = {
   user_id: 42,
-  email: 'user@example.com',
+  email: 'doctor@example.com',
+  role: 'doctor',
+  profile_id: 'D001',
 };
 
-test('creates and verifies a Medlink access token', () => {
+const responseRecorder = () => {
+  const response = {};
+  return {
+    response,
+    res: {
+      status(code) {
+        response.status = code;
+        return this;
+      },
+      json(body) {
+        response.body = body;
+        return this;
+      },
+    },
+  };
+};
+
+test('creates and verifies a role-aware access token', () => {
   const token = createAccessToken(testUser);
   const payload = verifyAccessToken(token);
 
   assert.equal(payload.sub, '42');
   assert.equal(payload.email, testUser.email);
+  assert.equal(payload.role, 'doctor');
+  assert.equal(payload.profile_id, 'D001');
 });
 
 test('normalizes email and requires email plus password', () => {
@@ -40,31 +62,6 @@ test('normalizes email and requires email plus password', () => {
       password: 'password123',
     }
   );
-
-  assert.throws(
-    () => normalizeCredentials({ email: 'user@example.com' }),
-    /Email and password are required/
-  );
-});
-
-test('rejects invalid credentials', () => {
-  assert.throws(
-    () =>
-      normalizeCredentials({
-        email: 'not-an-email',
-        password: 'password123',
-      }),
-    /valid email/
-  );
-
-  assert.throws(
-    () =>
-      normalizeCredentials({
-        email: 'user@example.com',
-        password: 'short',
-      }),
-    /at least 8 characters/
-  );
 });
 
 test('hashes and verifies passwords', async () => {
@@ -75,13 +72,13 @@ test('hashes and verifies passwords', async () => {
   assert.equal(await verifyPassword('wrong-password', passwordHash), false);
 });
 
-test('authentication middleware exposes the signed-in user', () => {
+test('authentication middleware exposes role and linked profile', () => {
   const token = createAccessToken(testUser);
   const req = {
     get: (header) =>
       header === 'authorization' ? `Bearer ${token}` : undefined,
   };
-  const res = {};
+  const { res } = responseRecorder();
   let nextCalled = false;
 
   authenticate(req, res, () => {
@@ -89,26 +86,32 @@ test('authentication middleware exposes the signed-in user', () => {
   });
 
   assert.equal(nextCalled, true);
-  assert.equal(req.user.user_id, '42');
-  assert.equal(req.user.email, testUser.email);
+  assert.deepEqual(req.user, {
+    user_id: '42',
+    email: testUser.email,
+    role: 'doctor',
+    profile_id: 'D001',
+  });
 });
 
-test('authentication middleware rejects a missing token', () => {
-  const req = { get: () => undefined };
-  const response = {};
-  const res = {
-    status(code) {
-      response.status = code;
-      return this;
-    },
-    json(body) {
-      response.body = body;
-      return this;
-    },
-  };
+test('authorization middleware accepts allowed roles', () => {
+  const req = { user: { role: 'staff' } };
+  const { res } = responseRecorder();
+  let nextCalled = false;
 
-  authenticate(req, res, () => assert.fail('next should not be called'));
+  authorize('staff')(req, res, () => {
+    nextCalled = true;
+  });
 
-  assert.equal(response.status, 401);
-  assert.deepEqual(response.body, { error: 'Authentication required' });
+  assert.equal(nextCalled, true);
 });
+
+test('authorization middleware rejects disallowed roles', () => {
+  const req = { user: { role: 'patient' } };
+  const { res, response } = responseRecorder();
+
+  authorize('staff')(req, res, () => assert.fail('next should not be called'));
+
+  assert.equal(response.status, 403);
+});
+

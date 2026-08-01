@@ -18,6 +18,8 @@ const authenticate = (req, res, next) => {
     req.user = {
       user_id: payload.sub,
       email: payload.email,
+      role: payload.role,
+      profile_id: payload.profile_id || null,
     };
     next();
   } catch (error) {
@@ -31,3 +33,4 @@ const authenticate = (req, res, next) => {
 };
 
 module.exports = authenticate;
+

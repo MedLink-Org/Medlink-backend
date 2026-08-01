@@ -2,7 +2,9 @@ const medicalRecordModel = require('../models/medicalRecordModel');
 
 const getAllMedicalRecords = async (req, res) => {
   try {
-    const result = await medicalRecordModel.getAllMedicalRecords();
+    const result = req.user.role === 'patient'
+      ? await medicalRecordModel.getMedicalRecordByPatientId(req.user.profile_id)
+      : await medicalRecordModel.getAllMedicalRecords();
     res.status(200).json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -12,22 +14,32 @@ const getAllMedicalRecords = async (req, res) => {
 const getMedicalRecordById = async (req, res) => {
   try {
     const result = await medicalRecordModel.getMedicalRecordById(req.params.id);
-    if (result.rows.length === 0) {
+    const record = result.rows[0];
+    if (!record) {
       return res.status(404).json({ error: 'Medical record not found' });
     }
-    res.status(200).json(result.rows[0]);
+    if (
+      req.user.role === 'patient'
+      && String(req.user.profile_id) !== String(record.patient_id)
+    ) {
+      return res.status(403).json({ error: 'You cannot access this medical record' });
+    }
+    res.status(200).json(record);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
 const getMedicalRecordByPatientId = async (req, res) => {
+  if (
+    req.user.role === 'patient'
+    && String(req.user.profile_id) !== String(req.params.patientId)
+  ) {
+    return res.status(403).json({ error: 'You cannot access this medical record' });
+  }
   try {
     const result = await medicalRecordModel.getMedicalRecordByPatientId(req.params.patientId);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'No medical record for this patient' });
-    }
-    res.status(200).json(result.rows[0]);
+    res.status(200).json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -74,3 +86,4 @@ module.exports = {
   updateMedicalRecord,
   deleteMedicalRecord,
 };
+

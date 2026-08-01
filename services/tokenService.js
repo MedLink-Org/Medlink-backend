@@ -11,6 +11,8 @@ const createAccessToken = (user) =>
   jwt.sign(
     {
       email: user.email,
+      role: user.role,
+      profile_id: user.profile_id || null,
     },
     getJwtSecret(),
     {
@@ -33,3 +35,4 @@ module.exports = {
   createAccessToken,
   verifyAccessToken,
 };
+

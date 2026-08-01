@@ -1,8 +1,11 @@
 const patientModel = require('../models/patientModel');
+const { canAccessPatient } = require('../middleware/resourceAccess');
 
 const getAllPatients = async (req, res) => {
   try {
-    const result = await patientModel.getAllPatients();
+    const result = req.user.role === 'patient'
+      ? await patientModel.getPatientById(req.user.profile_id)
+      : await patientModel.getAllPatients();
     res.status(200).json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -10,6 +13,9 @@ const getAllPatients = async (req, res) => {
 };
 
 const getPatientById = async (req, res) => {
+  if (!canAccessPatient(req.user, req.params.id)) {
+    return res.status(403).json({ error: 'You cannot access this patient' });
+  }
   try {
     const result = await patientModel.getPatientById(req.params.id);
     if (result.rows.length === 0) {
@@ -61,3 +67,4 @@ module.exports = {
   updatePatient,
   deletePatient,
 };
+

@@ -1,15 +1,18 @@
 const express = require('express');
-const router = express.Router();
-const appointmentController = require('../controllers/appointmentController.js');
-const validateAppointment = require('../middleware/validateAppointment.js')
+const appointmentController = require('../controllers/appointmentController');
+const validateAppointment = require('../middleware/validateAppointment');
+const authorize = require('../middleware/authorize');
 
-router.get('/', appointmentController.getAllAppointment);
-router.get('/:id', appointmentController.getAppointmentById);
-router.get('/patient/:patientId', appointmentController.getAppointmentsByPatientId);
-router.get('/doctor/:doctorId', appointmentController.getAppointmentsByDoctorId);
-router.get('/nurse/:nurseId', appointmentController.getAppointmentsByNurseId);
-router.post('/', validateAppointment, appointmentController.createAppointment);
-router.put('/:id', validateAppointment, appointmentController.updateAppointment);
-router.delete('/:id', appointmentController.deleteAppointment);
+const router = express.Router();
+
+router.get('/', authorize('staff', 'doctor', 'nurse', 'patient'), appointmentController.getAllAppointment);
+router.get('/patient/:patientId', authorize('staff', 'doctor', 'nurse', 'patient'), appointmentController.getAppointmentsByPatientId);
+router.get('/doctor/:doctorId', authorize('staff', 'doctor', 'nurse'), appointmentController.getAppointmentsByDoctorId);
+router.get('/nurse/:nurseId', authorize('staff', 'doctor', 'nurse'), appointmentController.getAppointmentsByNurseId);
+router.get('/:id', authorize('staff', 'doctor', 'nurse', 'patient'), appointmentController.getAppointmentById);
+router.post('/', authorize('staff', 'patient'), validateAppointment, appointmentController.createAppointment);
+router.put('/:id', authorize('staff', 'doctor', 'nurse'), validateAppointment, appointmentController.updateAppointment);
+router.delete('/:id', authorize('staff'), appointmentController.deleteAppointment);
 
 module.exports = router;
+

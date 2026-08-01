@@ -2,7 +2,9 @@ const billingModel = require('../models/billingModel');
 
 const getAllBilling = async (req, res) => {
   try {
-    const result = await billingModel.getAllBilling();
+    const result = req.user.role === 'patient'
+      ? await billingModel.getBillingByPatientId(req.user.profile_id)
+      : await billingModel.getAllBilling();
     res.status(200).json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -12,16 +14,29 @@ const getAllBilling = async (req, res) => {
 const getBillingById = async (req, res) => {
   try {
     const result = await billingModel.getBillingById(req.params.id);
-    if (result.rows.length === 0) {
+    const bill = result.rows[0];
+    if (!bill) {
       return res.status(404).json({ error: 'Billing record not found' });
     }
-    res.status(200).json(result.rows[0]);
+    if (
+      req.user.role === 'patient'
+      && String(req.user.profile_id) !== String(bill.patient_id)
+    ) {
+      return res.status(403).json({ error: 'You cannot access this bill' });
+    }
+    res.status(200).json(bill);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
 const getBillingByPatientId = async (req, res) => {
+  if (
+    req.user.role === 'patient'
+    && String(req.user.profile_id) !== String(req.params.patientId)
+  ) {
+    return res.status(403).json({ error: 'You cannot access these bills' });
+  }
   try {
     const result = await billingModel.getBillingByPatientId(req.params.patientId);
     res.status(200).json(result.rows);
@@ -71,3 +86,4 @@ module.exports = {
   updateBilling,
   deleteBilling,
 };
+

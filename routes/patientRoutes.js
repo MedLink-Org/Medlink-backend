@@ -1,12 +1,15 @@
-const express = require('express')
-const router = express.Router()
-const patientController = require('../controllers/patientController.js')
-const validatePatient = require('../middleware/validatePatient.js');
+const express = require('express');
+const patientController = require('../controllers/patientController');
+const validatePatient = require('../middleware/validatePatient');
+const authorize = require('../middleware/authorize');
 
-router.get('/', patientController.getAllPatients)
-router.get('/:id', patientController.getPatientById)
-router.post('/', validatePatient, patientController.createPatient)
-router.put('/:id', validatePatient, patientController.updatePatient)
-router.delete('/:id', patientController.deletePatient)
+const router = express.Router();
 
-module.exports = router
+router.get('/', authorize('staff', 'doctor', 'nurse', 'patient'), patientController.getAllPatients);
+router.get('/:id', authorize('staff', 'doctor', 'nurse', 'patient'), patientController.getPatientById);
+router.post('/', authorize('staff'), validatePatient, patientController.createPatient);
+router.put('/:id', authorize('staff'), validatePatient, patientController.updatePatient);
+router.delete('/:id', authorize('staff'), patientController.deletePatient);
+
+module.exports = router;
+

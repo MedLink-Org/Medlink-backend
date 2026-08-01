@@ -1,13 +1,16 @@
 const express = require('express');
-const router = express.Router();
-const medicalRecordController = require('../controllers/medicalRecordController.js');
-const validateMedicalRecord = require('../middleware/validateMedicalRecords.js')
+const medicalRecordController = require('../controllers/medicalRecordController');
+const validateMedicalRecord = require('../middleware/validateMedicalRecords');
+const authorize = require('../middleware/authorize');
 
-router.get('/', medicalRecordController.getAllMedicalRecords);
-router.get('/:id', medicalRecordController.getMedicalRecordById);
-router.get('/patient/:patientId', medicalRecordController.getMedicalRecordByPatientId);
-router.post('/', validateMedicalRecord, medicalRecordController.createMedicalRecord);
-router.put('/:id', validateMedicalRecord, medicalRecordController.updateMedicalRecord);
-router.delete('/:id', medicalRecordController.deleteMedicalRecord);
+const router = express.Router();
+
+router.get('/', authorize('staff', 'doctor', 'nurse', 'patient'), medicalRecordController.getAllMedicalRecords);
+router.get('/patient/:patientId', authorize('staff', 'doctor', 'nurse', 'patient'), medicalRecordController.getMedicalRecordByPatientId);
+router.get('/:id', authorize('staff', 'doctor', 'nurse', 'patient'), medicalRecordController.getMedicalRecordById);
+router.post('/', authorize('staff', 'nurse'), validateMedicalRecord, medicalRecordController.createMedicalRecord);
+router.put('/:id', authorize('staff', 'nurse'), validateMedicalRecord, medicalRecordController.updateMedicalRecord);
+router.delete('/:id', authorize('staff'), medicalRecordController.deleteMedicalRecord);
 
 module.exports = router;
+

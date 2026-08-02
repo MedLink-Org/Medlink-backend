@@ -17,36 +17,41 @@ const sendAuthResponse = (res, statusCode, user) =>
     user,
   });
 
+const createAccount = async (email, password, role, profileId, fullName) => {
+  const passwordHash = await hashPassword(password);
+  const result = await userModel.createUser(
+    email,
+    passwordHash,
+    role,
+    profileId || null,
+    fullName
+  );
+
+  if (result.rows.length === 0) {
+    const error = new Error('A user account with this email already exists');
+    error.statusCode = 409;
+    throw error;
+  }
+
+  return result.rows[0];
+};
+
 const register = async (req, res) => {
   try {
     const { email, password } = normalizeCredentials(req.body);
     const role = String(req.body.role || '').trim().toLowerCase();
     const profileId = String(req.body.profile_id || '').trim();
+    const fullName = String(
+      req.body.full_name
+      || req.body.name
+      || email.split('@')[0]
+    ).trim();
 
     if (!allowedRoles.has(role)) {
       return res.status(400).json({ error: 'A valid account role is required' });
     }
-    if (role !== 'staff' && !profileId) {
-      return res.status(400).json({
-        error: 'A linked clinic profile is required for this role',
-      });
-    }
-
-    const passwordHash = await hashPassword(password);
-    const result = await userModel.createUser(
-      email,
-      passwordHash,
-      role,
-      profileId || null
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(409).json({
-        error: 'A user account with this email already exists',
-      });
-    }
-
-    return res.status(201).json({ user: result.rows[0] });
+    const user = await createAccount(email, password, role, profileId, fullName);
+    return sendAuthResponse(res, 201, user);
   } catch (error) {
     if (error.code === 'AUTH_CONFIG_ERROR') {
       console.error(error.message);
@@ -109,7 +114,7 @@ const getCurrentUser = async (req, res) => {
       return res.status(404).json({ error: 'User account not found' });
     }
 
-    return res.status(200).json(result.rows[0]);
+    return sendAuthResponse(res, 200, result.rows[0]);
   } catch (error) {
     console.error('Unable to load current user:', error);
     return res.status(500).json({ error: 'Unable to load current user' });
@@ -121,4 +126,3 @@ module.exports = {
   login,
   register,
 };
-

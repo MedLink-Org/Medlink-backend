@@ -1,14 +1,20 @@
 const pool = require('../config/db');
 
+const normalizeStatus = (status) => String(status || 'scheduled')
+  .trim()
+  .toLowerCase()
+  .replace(/^checked in$/, 'scheduled')
+  .replace(/^canceled$/, 'cancelled');
+
 const getAllAppointment = () => pool.query('SELECT * FROM appointments');
 const getAppointmentById = (id) =>
   pool.query('SELECT * FROM appointments WHERE appointment_id = $1', [id]);
-const getAppointmentsByPatientId = (patient_id) =>
-  pool.query('SELECT * FROM appointments WHERE patient_id = $1', [patient_id]);
-const getAppointmentsByDoctorId = (doctor_id) =>
-  pool.query('SELECT * FROM appointments WHERE doctor_id = $1', [doctor_id]);
-const getAppointmentsByNurseId = (nurse_id) =>
-  pool.query('SELECT * FROM appointments WHERE nurse_id = $1', [nurse_id]);
+const getAppointmentsByPatientId = (patientId) =>
+  pool.query('SELECT * FROM appointments WHERE patient_id = $1', [patientId]);
+const getAppointmentsByDoctorId = (doctorId) =>
+  pool.query('SELECT * FROM appointments WHERE doctor_id = $1', [doctorId]);
+const getAppointmentsByNurseId = (nurseId) =>
+  pool.query('SELECT * FROM appointments WHERE nurse_id = $1', [nurseId]);
 
 const createAppointment = (data) =>
   pool.query(
@@ -23,7 +29,7 @@ const createAppointment = (data) =>
       data.appointment_date,
       data.appointment_time,
       data.purpose || data.reason || data.visit_type || '',
-      data.status || 'Scheduled',
+      normalizeStatus(data.status),
     ]
   );
 
@@ -46,7 +52,7 @@ const updateAppointment = (id, data) =>
       data.doctor_id,
       data.nurse_id || null,
       data.purpose || data.reason || data.visit_type || '',
-      data.status,
+      normalizeStatus(data.status),
       id,
     ]
   );
